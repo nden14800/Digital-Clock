@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>デジタル時計</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Google Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            transition: background-color 0.5s ease;
+        }
+        body.dark {
+            background-color: #111827;
+            color: #f9fafb;
+        }
+        #clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: background-color 0.5s ease, box-shadow 0.5s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 0.3);
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        #clock-container.dark {
+            background-color: rgba(31, 41, 55, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 0.1);
+        }
+        #time,
+        #date,
+        #utc-offset-selector,
+        #ampm-button,
+        #utc-info h2,
+        #utc-info p,
+        #utc-info ul,
+        #utc-info li {
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        #time {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.05em;
+            text-shadow: 2px 2px 3px rgba(0,0,0,0.05);
+            transition: color 0.5s ease;
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+        }
+        #time.dark {
+            color: #f8fafc;
+        }
+        #date {
+            font-size: 1.25rem;
+            color: #4b5563;
+            transition: color 0.5s ease;
+            margin-bottom: 1.5rem;
+            white-space: nowrap;
+        }
+        #date.dark {
+            color: #d1d5db;
+        }
+        #utc-offset-selector {
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            background-color: #fff;
+            color: #374151;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1rem;
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+        }
+        #utc-offset-selector.dark {
+            border-color: #4b5563;
+            background-color: #4a5568;
+            color: #f8fafc;
+        }
+        #utc-offset-selector:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        #ampm-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            background-color: #3b82f6;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+        }
+        #ampm-button:hover {
+            background-color: #2563eb;
+        }
+        #ampm-button:active {
+            background-color: #1e40af;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            transform: translateY(1px);
+        }
+        #ampm-button.dark {
+            background-color: #4299e1;
+        }
+        #ampm-button.dark:hover {
+            background-color: #3182ce;
+        }
+        #ampm-button.dark:active {
+            background-color: #285e98;
+        }
+        #notification-container {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+        .notification {
+            background-color: #fff;
+            color: #1f2937;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(-20px);
+            pointer-events: all;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e0e0e0;
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+            animation: fadeIn 1s ease forwards; /* 追加 */
+        }
+        .notification.dark {
+            background-color: #374151;
+            color: #f9fafb;
+            border-color: #6b7280;
+        }
+        .notification.fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .notification.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .notification.success {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-color: #16a34a;
+        }
+        .notification.success.dark {
+            background-color: #16a34a;
+            color: #f0fdf4;
+            border-color: #15803d;
+        }
+        .notification.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-color: #ef4444;
+        }
+        .notification.error.dark {
+            background-color: #ef4444;
+            color: #fee2e2;
+            border-color: #b91c1c;
+        }
+        #utc-info {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            background-color: #f7fafc;
+            color: #4b5563;
+            font-size: 0.875rem;
+            line-height: 1.5rem;
+            border: 1px solid #e5e7eb;
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+            width: 90%;
+            max-width: 640px;
+            box-sizing: border-box;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        #utc-info.dark {
+            background-color: #242424;
+            color: #d1d5db;
+            border-color: #4a5568;
+        }
+        #utc-info h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        #utc-info h2.dark{
+            color: #f8fafc;
+        }
+        #utc-info ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        #utc-info li{
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            #clock-container {
+                padding: 1.5rem;
+                width: 95%;
+            }
+            #time {
+                font-size: 2.5rem;
+            }
+            #date {
+                font-size: 1rem;
+            }
+            #utc-info {
+                padding: 1rem;
+                font-size: 0.75rem;
+                line-height: 1.2rem;
+            }
+            .notification {
+                padding: 1rem;
+                font-size: 0.875rem;
+                width: 95%;
+                max-width: none;
+                box-sizing: border-box;
+            }
+            #utc-offset-selector,
+            #ampm-button {
+                width: 100%;
+                max-width: none;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body class="">
+    <div id="clock-container" class="">
+        <div id="time" class=""></div>
+        <div id="date" class=""></div>
+        <select id="utc-offset-selector" class="">
+            <option value="-12">(UTC-12:00) 無人島や公海上の地域</option>
+            <option value="-11">(UTC-11:00) アメリカ領サモア、ニウエ</option>
+            <option value="-10">(UTC-10:00) クック諸島、フランス領ポリネシア（タヒチ島など）、アメリカ合衆国（ハワイ州）</option>
+            <option value="-9">(UTC-09:00) フランス領ポリネシア（マルケサス諸島）、アメリカ合衆国（アラスカ州の一部）</option>
+            <option value="-8">(UTC-08:00) カナダ（ブリティッシュコロンビア州の一部）、アメリカ合衆国（カリフォルニア州、ワシントン州など）、メキシコ（バハ・カリフォルニア州の一部）</option>
+            <option value="-7">(UTC-07:00) カナダ（アルバータ州、ブリティッシュコロンビア州の一部）、アメリカ合衆国（アリゾナ州、コロラド州など）、メキシコ（チワワ州など）</option>
+            <option value="-6">(UTC-06:00) カナダ（マニトバ州、サスカチュワン州）、アメリカ合衆国（イリノイ州、テキサス州など）、メキシコ、中央アメリカ諸国</option>
+            <option value="-5">(UTC-05:00) カナダ（オンタリオ州、ケベック州の一部）、アメリカ合衆国（ニューヨーク州、フロリダ州など）、カリブ海の国々、南アメリカ（コロンビア、ペルーなど）</option>
+            <option value="-4">(UTC-04:00) カナダ（ケベック州の一部、大西洋岸諸州）、カリブ海の国々、南アメリカ（ボリビア、ベネズエラなど）</option>
+            <option value="-3">(UTC-03:00) カナダ（ニューファンドランド・ラブラドール州の一部）、南アメリカ（アルゼンチン、ブラジルの一部など）</option>
+            <option value="-2">(UTC-02:00) ブラジル（フェルナンド・デ・ノローニャ諸島）</option>
+            <option value="-1">(UTC-01:00) カーボベルデ、ポルトガル（アゾレス諸島）</option>
+            <option value="0" selected>(UTC±00:00) イギリス、アイルランド、ポルトガル（本土）、アフリカ（ガーナ、セネガルなど）</option>
+            <option value="1">(UTC+01:00) フランス、ドイツ、イタリア、スペイン、アフリカ（ナイジェリア、南アフリカなど）</option>
+            <option value="2">(UTC+02:00) 東ヨーロッパ、中東、アフリカ（エジプト、南アフリカなど）</option>
+            <option value="3">(UTC+03:00) ロシア（モスクワなど）、中東、アフリカ（ケニア、タンザニアなど）</option>
+            <option value="4">(UTC+04:00) ロシア（ウラル地方）、アラブ首長国連邦、オマーン</option>
+            <option value="5">(UTC+05:00) ロシア（エカテリンブルクなど）、パキスタン、ウズベキスタン</option>
+            <option value="6">(UTC+06:00) ロシア（オムスクなど）、カザフスタン、バングラデシュ</option>
+            <option value="7">(UTC+07:00) ロシア（クラスノヤルスクなど）、タイ、インドネシア（西部）</option>
+            <option value="8">(UTC+08:00) ロシア（イルクーツクなど）、中国、オーストラリア（西部）</option>
+            <option value="9">(UTC+09:00) ロシア（ヤクーツクなど）、日本、韓国</option>
+            <option value="10">(UTC+10:00) ロシア（ウラジオストクなど）、オーストラリア（東部）</option>
+            <option value="11">(UTC+11:00) ロシア（マガダンなど）、オーストラリア（ロード・ハウ島）、ソロモン諸島</option>
+            <option value="12">(UTC+12:00) ロシア（カムチャツカ地方など）、ニュージーランド、キリバス共和国</option>
+            <option value="13">(UTC+13:00) ニュージーランド、サモア</option>
+            <option value="14">(UTC+14:00) キリバス共和国</option>
+        </select>
+        <button id="ampm-button" class="" onclick="toggleTimeFormat()">12時間表示</button>
+    </div>
+
+    <div id="notification-container"></div>
+
+    <section id="utc-info" class="">
+        <h2>UTC (協定世界時) について</h2>
+        <p>
+            UTCってやつは、世界の時間を決める時の基準になるめっちゃ重要なやつなんすよ。
+            地球はグルグル回ってるから、場所によって時間が違うじゃん？
+            それを統一するために、みんなで「ここを基準にしようぜ！」って決めたのがUTCってわけ。
+        </p>
+        <p>
+            昔はイギリスのグリニッジっていう場所の時間を基準にしてたんだけど、
+            もっと正確な時間が必要になったから、今のUTCになったんだと。
+            UTCは、めっちゃ正確な原子時計とか、地球の自転とか、いろんなものを計算して決められてるんだぜ。
+        </p>
+        <p>
+            例えば、日本はUTCより9時間進んでるから、「UTC+9」って呼ばれてる。
+            海外の人とやり取りするときとか、国際的なイベントとか、いろんな場面でUTCが使われてるから、
+            覚えておくと便利っすよ！
+        </p>
+    </section>
+
+    <script>
+        const timeElement = document.getElementById('time');
+        const dateElement = document.getElementById('date');
+        const utcOffsetSelector = document.getElementById('utc-offset-selector');
+        const ampmButton = document.getElementById('ampm-button');
+        const body = document.body;
+        const clockContainer = document.getElementById('clock-container');
+        const notificationContainer = document.getElementById('notification-container');
+        const utcInfoSection = document.getElementById('utc-info');
+
+        let is24HourFormat = true;
+        let currentUTCOffset = parseInt(utcOffsetSelector.value);
+        let intervalId;
+
+        // ダークモード設定
+        function enableDarkMode() {
+            body.classList.add('dark');
+            clockContainer.classList.add('dark');
+            timeElement.classList.add('dark');
+            dateElement.classList.add('dark');
+            utcOffsetSelector.classList.add('dark');
+            ampmButton.classList.add('dark');
+            utcInfoSection.classList.add('dark');
+        }
+
+        function disableDarkMode() {
+            body.classList.remove('dark');
+            clockContainer.classList.remove('dark');
+            timeElement.classList.remove('dark');
+            dateElement.classList.remove('dark');
+            utcOffsetSelector.classList.remove('dark');
+            ampmButton.classList.remove('dark');
+            utcInfoSection.classList.remove('dark');
+        }
+
+        // ユーザーのテーマ設定をチェック
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            enableDarkMode();
+        } else {
+            disableDarkMode();
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            notification.classList.add(type);
+            if (body.classList.contains('dark')) {
+                notification.classList.add('dark');
+            }
+            notification.classList.add('fade-in');
+            notification.textContent = message;
+            notificationContainer.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.remove('fade-in');
+                notification.classList.add('fade-out');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            }, 3000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const localTime = new Date(utcTime + (currentUTCOffset * 3600000));
+            const year = localTime.getFullYear();
+            const month = String(localTime.getMonth() + 1).padStart(2, '0');
+            const day = String(localTime.getDate()).padStart(2, '0');
+            const hours = is24HourFormat ? String(localTime.getHours()).padStart(2, '0') : get12HourFormat(localTime.getHours());
+            const minutes = String(localTime.getMinutes()).padStart(2, '0');
+            const seconds = String(localTime.getSeconds()).padStart(2, '0');
+            const ampm = is24HourFormat ? '' : localTime.getHours() >= 12 ? 'PM' : 'AM';
+
+            timeElement.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+            dateElement.textContent = `${year}-${month}-${day}`;
+        }
+
+        function get12HourFormat(hours) {
+            let h = hours % 12;
+            h = h ? h : 12;
+            return String(h).padStart(2, '0');
+        }
+
+        function toggleTimeFormat() {
+            is24HourFormat = !is24HourFormat;
+            ampmButton.textContent = is24HourFormat ? '12時間表示' : '24時間表示';
+            updateClock();
+            showNotification(`表示形式を${is24HourFormat ? '12時間' : '24時間'}表示に切り替えました。`, 'success');
+        }
+
+        utcOffsetSelector.addEventListener('change', () => {
+            const selectedOffset = parseFloat(utcOffsetSelector.value);
+            if (!isNaN(selectedOffset)) {
+                currentUTCOffset = selectedOffset;
+                updateClock();
+                showNotification(`UTCオフセットを ${selectedOffset > 0 ? '+' : ''}${selectedOffset} に設定しました。`, 'success');
+            } else {
+                showNotification('UTCオフセットの設定に失敗しました。', 'error');
+            }
+        });
+
+        intervalId = setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
