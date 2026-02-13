@@ -3,27 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Clock</title>
+    <title>Modern Digital Clock</title>
     <style>
-        /* Robotoフォントのインポート (より細いウェイト100をインポート) */
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap');
+        /* Robotoフォントのインポート (より細いウェイト100と、UI用の300/400をインポート) */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&display=swap');
 
         /* --- 基本スタイルとテーマ設定 --- */
         :root {
             /* ライトテーマの変数 */
-            --background-color: #f0f0f0;
-            --text-color: #333;
-            --settings-bg-color: #ffffff;
-            --settings-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --background-color: #f5f7fa;
+            --text-color: #2d3436;
+            --clock-glow: 0 0 0 rgba(0,0,0,0);
+            
+            /* 設定パネル（グラスモーフィズム用） */
+            --settings-bg-color: rgba(255, 255, 255, 0.75);
+            --settings-border: 1px solid rgba(255, 255, 255, 0.8);
+            --settings-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --settings-text: #2d3436;
+            
+            /* スイッチ類 */
+            --switch-bg: #e0e0e0;
+            --switch-on: #6c5ce7; /* モダンなパープルブルー */
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 /* ダークテーマの変数 */
-                --background-color: #1a1a1a;
-                --text-color: #e0e0e0;
-                --settings-bg-color: #2c2c2c;
-                --settings-shadow: 0 4px 15px rgba(0,0,0,0.4);
+                --background-color: #0f0f12;
+                --text-color: #dfe6e9;
+                --clock-glow: 0 0 20px rgba(223, 230, 233, 0.15);
+                
+                /* 設定パネル（ダークグラス） */
+                --settings-bg-color: rgba(20, 20, 25, 0.75);
+                --settings-border: 1px solid rgba(255, 255, 255, 0.1);
+                --settings-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+                --settings-text: #dfe6e9;
+
+                /* スイッチ類 */
+                --switch-bg: #4a4a4a;
+                --switch-on: #a29bfe;
             }
         }
 
@@ -31,7 +49,7 @@
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -39,11 +57,10 @@
             }
         }
         
-        /* --- コロンの滑らかな点滅アニメーション (完全に消えるように修正) --- */
+        /* --- コロンの滑らかな点滅（ブリージング効果） --- */
         @keyframes smooth-blink {
-            50% {
-                opacity: 0; /* 完全に透明にする */
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; } /* 完全に消さず、薄くすることでモダンに見せる */
         }
 
         /* --- 全体レイアウト --- */
@@ -62,34 +79,49 @@
             background-color: var(--background-color);
             color: var(--text-color);
             font-family: 'Roboto', sans-serif;
-            font-weight: 100; /* 文字をさらに細くする */
-            transition: background-color 0.5s, color 0.5s;
+            font-weight: 100;
+            /* 非常に滑らかな背景色遷移 */
+            transition: background-color 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         /* --- 時計本体のスタイル --- */
         #clock-container {
-            animation: fadeIn 1.2s ease-out forwards;
+            animation: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #time {
-            font-size: 10vw;
-            letter-spacing: 0.05em;
+            font-size: 12vw; /* 少し大きく */
+            letter-spacing: -0.02em; /* タイトなスペーシング */
+            line-height: 1;
+            /* 等幅数字を使用（数字が変化しても幅が変わらないようにする重要なモダン設定） */
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+            text-shadow: var(--clock-glow);
+            transition: text-shadow 0.5s ease;
         }
 
         #date {
-            font-size: 2.5vw;
-            margin-top: 10px;
-            animation: fadeIn 1.5s ease-out forwards;
+            font-size: 2vw;
+            margin-top: 1vh;
+            font-weight: 300; /* 日付は少しだけ太さを足して可読性確保 */
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+            animation: fadeIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards; /* 少し遅らせる */
         }
         
         /* コロンのスタイル */
         .colon {
-            /* アニメーションを滑らかに開始/停止させるためのtransition */
+            display: inline-block;
             transition: opacity 0.5s ease-in-out;
-            padding: 0 0.05em; /* コロンの左右に少しだけ余白を追加 */
+            margin: 0 -0.02em;
+            position: relative;
+            top: -0.05em; /* 微調整 */
         }
         
-        /* 点滅が有効な時にアニメーションを適用 (継続時間を長くしてより滑らかに) */
+        /* 点滅が有効な時にアニメーションを適用 */
         body.blinking-enabled .colon {
             animation: smooth-blink 2s ease-in-out infinite;
         }
@@ -98,49 +130,56 @@
         /* レスポンシブ対応 */
         @media (max-width: 768px) {
             #time {
-                font-size: 18vw;
+                font-size: 20vw;
             }
             #date {
                 font-size: 5vw;
+                margin-top: 10px;
             }
         }
 
         /* --- 設定ボタン --- */
         #settings-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 25px;
+            right: 25px;
             background: none;
             border: none;
             cursor: pointer;
             color: var(--text-color);
-            padding: 10px;
+            padding: 12px;
             border-radius: 50%;
-            transition: background-color 0.3s;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
             animation: fadeIn 1.2s ease-out forwards;
+            opacity: 0.6;
         }
         #settings-btn:hover {
-            background-color: rgba(128, 128, 128, 0.2);
+            background-color: rgba(128, 128, 128, 0.1);
+            transform: rotate(90deg) scale(1.1);
+            opacity: 1;
         }
         #settings-btn svg {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
+            display: block; /* 隙間除去 */
         }
 
-        /* --- 設定パネル --- */
+        /* --- 設定パネル（モダンオーバーレイ） --- */
         #settings-panel {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.2); /* 背景を少し暗く */
+            backdrop-filter: blur(5px); /* 背景全体を少しぼかす */
+            -webkit-backdrop-filter: blur(5px);
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.4s, visibility 0.4s;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
             z-index: 1000;
         }
 
@@ -149,18 +188,26 @@
             visibility: visible;
         }
 
+        /* --- グラスモーフィズムモーダル --- */
         .settings-modal {
             background-color: var(--settings-bg-color);
-            padding: 25px 35px;
-            border-radius: 12px;
+            backdrop-filter: blur(20px); /* すりガラス効果 */
+            -webkit-backdrop-filter: blur(20px);
+            border: var(--settings-border);
+            color: var(--settings-text);
+            
+            padding: 30px 40px;
+            border-radius: 24px; /* 大きめの角丸 */
             box-shadow: var(--settings-shadow);
-            width: 90%;
-            max-width: 320px;
-            transform: scale(0.95);
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            width: 85%;
+            max-width: 360px;
+            
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* バウンドするようなリッチな動き */
         }
         #settings-panel.visible .settings-modal {
-            transform: scale(1);
+            transform: scale(1) translateY(0);
         }
 
 
@@ -168,40 +215,43 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-            padding-bottom: 15px;
+            margin-bottom: 30px;
+            /* ボーダー削除してよりクリーンに */
         }
         .settings-header h2 {
             margin: 0;
-            font-size: 20px;
-            font-weight: 100;
+            font-size: 24px;
+            font-weight: 300; /* 少し太くして見出しらしく */
+            letter-spacing: 0.05em;
         }
 
         #close-btn {
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--text-color);
-            padding: 5px;
+            color: var(--settings-text);
+            padding: 8px;
             border-radius: 50%;
             transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         #close-btn:hover {
-            background-color: rgba(128, 128, 128, 0.2);
+            background-color: rgba(128, 128, 128, 0.15);
         }
         #close-btn svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
         }
 
         .settings-content {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px; /* 間隔を広げる */
         }
 
-        /* --- カスタムスイッチのスタイル --- */
+        /* --- カスタムスイッチのモダン化 --- */
         .switch {
             position: relative;
             display: flex;
@@ -209,215 +259,218 @@
             justify-content: space-between;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 300;
+            user-select: none;
         }
 
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
+            position: absolute;
         }
 
         .slider {
             position: relative;
-            width: 44px;
-            height: 24px;
-            background-color: #ccc;
+            width: 50px;
+            height: 28px;
+            background-color: var(--switch-bg);
             border-radius: 34px;
-            transition: background-color 0.3s;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
+            height: 22px;
+            width: 22px;
             left: 3px;
             bottom: 3px;
             background-color: white;
             border-radius: 50%;
-            transition: transform 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* スイッチのノブに影を追加 */
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* バウンド効果 */
         }
         
-        @media (prefers-color-scheme: dark) {
-            .slider {
-                background-color: #555;
-            }
-        }
-
         input:checked + .slider {
-            background-color: #4CAF50;
+            background-color: var(--switch-on);
         }
 
         input:checked + .slider:before {
-            transform: translateX(20px);
+            transform: translateX(22px);
+        }
+
+        /* ホバー時の微細なフィードバック */
+        .switch:hover .slider:before {
+            box-shadow: 0 0 0 4px rgba(128, 128, 128, 0.1);
         }
     </style>
 </head>
 <body>
 
-    <!-- 時計表示エリア -->
-    <div id="clock-container">
-        <div id="time"></div>
-        <div id="date"></div>
-    </div>
+<!-- 時計表示エリア -->
+<div id="clock-container">
+    <div id="time"></div>
+    <div id="date"></div>
+</div>
 
-    <!-- 設定ボタン -->
-    <button id="settings-btn" aria-label="Settings">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
-            <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
-            <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
-        </svg>
-    </button>
-    
-    <!-- 設定パネル -->
-    <div id="settings-panel">
-        <div class="settings-modal">
-            <div class="settings-header">
-                <h2>Settings</h2>
-                <button id="close-btn" aria-label="Close settings">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
-                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="settings-content">
-                <label class="switch">
-                    <span>秒を表示する</span>
-                    <input type="checkbox" id="show-seconds-toggle">
-                    <span class="slider"></span>
-                </label>
-                <label class="switch">
-                    <span>日付を表示する</span>
-                    <input type="checkbox" id="show-date-toggle">
-                    <span class="slider"></span>
-                </label>
-                <label class="switch">
-                    <span>「:」を点滅させる</span>
-                    <input type="checkbox" id="blink-colon-toggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
+<!-- 設定ボタン -->
+<button id="settings-btn" aria-label="Settings">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+    </svg>
+</button>
+
+<!-- 設定パネル -->
+<div id="settings-panel">
+    <div class="settings-modal">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button id="close-btn" aria-label="Close settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="settings-content">
+            <label class="switch">
+                <span>秒を表示する</span>
+                <input type="checkbox" id="show-seconds-toggle">
+                <span class="slider"></span>
+            </label>
+            <label class="switch">
+                <span>日付を表示する</span>
+                <input type="checkbox" id="show-date-toggle">
+                <span class="slider"></span>
+            </label>
+            <label class="switch">
+                <span>「:」を点滅させる</span>
+                <input type="checkbox" id="blink-colon-toggle">
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- DOM要素の取得 ---
-            const timeEl = document.getElementById('time');
-            const dateEl = document.getElementById('date');
-            const settingsBtn = document.getElementById('settings-btn');
-            const settingsPanel = document.getElementById('settings-panel');
-            const closeBtn = document.getElementById('close-btn');
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM要素の取得 ---
+        const timeEl = document.getElementById('time');
+        const dateEl = document.getElementById('date');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeBtn = document.getElementById('close-btn');
+        
+        const showSecondsToggle = document.getElementById('show-seconds-toggle');
+        const showDateToggle = document.getElementById('show-date-toggle');
+        const blinkColonToggle = document.getElementById('blink-colon-toggle');
+
+        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+        
+        // --- 設定の管理 ---
+        let settings = {
+            showSeconds: true,
+            showDate: true,
+            blinkColon: true,
+        };
+
+        // localStorageから設定を読み込む
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('digitalClockSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+            }
+            // UIに設定を反映
+            showSecondsToggle.checked = settings.showSeconds;
+            showDateToggle.checked = settings.showDate;
+            blinkColonToggle.checked = settings.blinkColon;
             
-            const showSecondsToggle = document.getElementById('show-seconds-toggle');
-            const showDateToggle = document.getElementById('show-date-toggle');
-            const blinkColonToggle = document.getElementById('blink-colon-toggle');
+            // 日付表示の初期状態を設定
+            dateEl.style.display = settings.showDate ? 'block' : 'none';
 
-            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-            
-            // --- 設定の管理 ---
-            let settings = {
-                showSeconds: true,
-                showDate: true,
-                blinkColon: true,
-            };
+            // 点滅設定をbodyのクラスに反映
+            document.body.classList.toggle('blinking-enabled', settings.blinkColon);
+        }
 
-            // localStorageから設定を読み込む
-            function loadSettings() {
-                const savedSettings = localStorage.getItem('digitalClockSettings');
-                if (savedSettings) {
-                    settings = JSON.parse(savedSettings);
-                }
-                // UIに設定を反映
-                showSecondsToggle.checked = settings.showSeconds;
-                showDateToggle.checked = settings.showDate;
-                blinkColonToggle.checked = settings.blinkColon;
-                
-                // 日付表示の初期状態を設定
-                dateEl.style.display = settings.showDate ? 'block' : 'none';
+        // localStorageに設定を保存する
+        function saveSettings() {
+            localStorage.setItem('digitalClockSettings', JSON.stringify(settings));
+        }
 
-                // 点滅設定をbodyのクラスに反映
-                document.body.classList.toggle('blinking-enabled', settings.blinkColon);
+        // --- 時計の更新処理 ---
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const weekday = weekdays[now.getDay()];
+
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            // コロンをspanで囲み、CSSでアニメーションを制御する
+            const colon = `<span class="colon">:</span>`;
+
+            let timeString = `${hours}${colon}${minutes}`;
+            if (settings.showSeconds) {
+                timeString += `${colon}${seconds}`;
             }
 
-            // localStorageに設定を保存する
-            function saveSettings() {
-                localStorage.setItem('digitalClockSettings', JSON.stringify(settings));
+            timeEl.innerHTML = timeString;
+
+            if (settings.showDate) {
+                dateEl.textContent = `${year}年${month}月${day}日 (${weekday})`;
             }
+        }
+        
+        // --- イベントリスナーの設定 ---
 
-            // --- 時計の更新処理 ---
-            function updateClock() {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = now.getMonth() + 1;
-                const day = now.getDate();
-                const weekday = weekdays[now.getDay()];
-
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-
-                // コロンをspanで囲み、CSSでアニメーションを制御する
-                const colon = `<span class="colon">:</span>`;
-
-                let timeString = `${hours}${colon}${minutes}`;
-                if (settings.showSeconds) {
-                    timeString += `${colon}${seconds}`;
-                }
-
-                timeEl.innerHTML = timeString;
-
-                if (settings.showDate) {
-                    dateEl.textContent = `${year}年${month}月${day}日 (${weekday})`;
-                }
-            }
-            
-            // --- イベントリスナーの設定 ---
-
-            // 設定パネルの表示
-            settingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.add('visible');
-            });
-
-            // 設定パネルの非表示
-            function closeSettings() {
-                settingsPanel.classList.remove('visible');
-            }
-            closeBtn.addEventListener('click', closeSettings);
-            settingsPanel.addEventListener('click', (e) => {
-                // パネルの外側をクリックしたら閉じる
-                if (e.target === settingsPanel) {
-                    closeSettings();
-                }
-            });
-
-            // 秒表示の切り替え
-            showSecondsToggle.addEventListener('change', (e) => {
-                settings.showSeconds = e.target.checked;
-                saveSettings();
-                updateClock(); // 表示が切り替わるので即時反映
-            });
-
-            // 日付表示の切り替え
-            showDateToggle.addEventListener('change', (e) => {
-                settings.showDate = e.target.checked;
-                dateEl.style.display = settings.showDate ? 'block' : 'none';
-                saveSettings();
-            });
-
-            // コロン点滅の切り替え
-            blinkColonToggle.addEventListener('change', (e) => {
-                settings.blinkColon = e.target.checked;
-                // bodyにクラスを付け外しするだけで、CSSがアニメーションを制御する
-                document.body.classList.toggle('blinking-enabled', settings.blinkColon);
-                saveSettings();
-            });
-
-            // --- 初期化処理 ---
-            loadSettings();
-            updateClock();
-            setInterval(updateClock, 1000); // 1秒ごとに時計を更新
+        // 設定パネルの表示
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.classList.add('visible');
         });
-    </script>
+
+        // 設定パネルの非表示
+        function closeSettings() {
+            settingsPanel.classList.remove('visible');
+        }
+        closeBtn.addEventListener('click', closeSettings);
+        settingsPanel.addEventListener('click', (e) => {
+            // パネルの外側をクリックしたら閉じる
+            if (e.target === settingsPanel) {
+                closeSettings();
+            }
+        });
+
+        // 秒表示の切り替え
+        showSecondsToggle.addEventListener('change', (e) => {
+            settings.showSeconds = e.target.checked;
+            saveSettings();
+            updateClock(); // 表示が切り替わるので即時反映
+        });
+
+        // 日付表示の切り替え
+        showDateToggle.addEventListener('change', (e) => {
+            settings.showDate = e.target.checked;
+            dateEl.style.display = settings.showDate ? 'block' : 'none';
+            saveSettings();
+        });
+
+        // コロン点滅の切り替え
+        blinkColonToggle.addEventListener('change', (e) => {
+            settings.blinkColon = e.target.checked;
+            // bodyにクラスを付け外しするだけで、CSSがアニメーションを制御する
+            document.body.classList.toggle('blinking-enabled', settings.blinkColon);
+            saveSettings();
+        });
+
+        // --- 初期化処理 ---
+        loadSettings();
+        updateClock();
+        setInterval(updateClock, 1000); // 1秒ごとに時計を更新
+    });
+</script>
 </body>
 </html>
