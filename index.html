@@ -11,7 +11,7 @@
 
         /* --- 基本スタイルとテーマ設定 --- */
         :root {
-            /* デフォルト変数はJSで上書きされる前提だが、初期値を設定 */
+            /* ライトテーマの変数 */
             --background-color: #f5f7fa;
             --text-color: #2d3436;
             --clock-glow: 0 0 0 rgba(0,0,0,0);
@@ -33,6 +33,7 @@
 
         @media (prefers-color-scheme: dark) {
             :root {
+                /* ダークテーマの変数 */
                 --background-color: #0f0f12;
                 --text-color: #dfe6e9;
                 --clock-glow: 0 0 20px rgba(223, 230, 233, 0.15);
@@ -54,7 +55,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* --- コロンの滑らかな点滅 (1秒周期: 動画の仕様) --- */
+        /* --- コロンの滑らかな点滅 (1秒周期) --- */
         @keyframes smooth-blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; } /* 完全に消える */
@@ -77,6 +78,7 @@
             color: var(--text-color);
             font-family: 'Roboto', sans-serif; /* デフォルト */
             font-weight: 100;
+            /* 背景色もテーマ変更時に滑らかに遷移 */
             transition: background-color 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), font-family 0.3s ease;
         }
 
@@ -184,13 +186,11 @@
             border-radius: 24px;
             box-shadow: var(--settings-shadow);
             width: 90%;
-            max-width: 380px; /* 少し幅広に */
+            max-width: 380px;
             max-height: 90vh;
-            overflow-y: auto; /* コンテンツが多い場合にスクロール */
+            overflow-y: auto;
             transform: scale(0.9) translateY(20px);
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            
-            /* スクロールバー非表示（モダンブラウザ） */
             scrollbar-width: none;
         }
         .settings-modal::-webkit-scrollbar { display: none; }
@@ -231,7 +231,7 @@
             gap: 20px;
         }
 
-        /* --- UIコンポーネント: ラベルとコントロールのペア --- */
+        /* --- UIコンポーネント --- */
         .setting-item {
             display: flex;
             align-items: center;
@@ -279,7 +279,7 @@
         input:checked + .slider { background-color: var(--switch-on); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        /* --- カスタムセレクトボックス（フォント選択用） --- */
+        /* --- カスタムセレクトボックス --- */
         .custom-select-wrapper {
             position: relative;
             user-select: none;
@@ -350,7 +350,6 @@
             background: var(--switch-on);
             color: #fff;
         }
-        /* 矢印アイコン */
         .arrow {
             position: relative;
             height: 10px;
@@ -370,7 +369,7 @@
         .open .arrow::before { left: -3px; transform: rotate(-45deg); }
         .open .arrow::after { left: 3px; transform: rotate(45deg); }
 
-        /* --- スライダー（フォントサイズ用） --- */
+        /* --- スライダー --- */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -396,29 +395,35 @@
             border-radius: 2px;
         }
         
-        /* --- カラーピッカー --- */
-        .color-picker-wrapper {
+        /* --- リセットボタンエリア --- */
+        .reset-section {
+            margin-top: 15px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(128, 128, 128, 0.2);
             display: flex;
-            align-items: center;
+            justify-content: center;
         }
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+        
+        #reset-settings-btn {
             background: none;
+            border: 1px solid var(--settings-text);
+            color: var(--settings-text);
+            padding: 8px 24px;
+            border-radius: 24px;
             cursor: pointer;
-            padding: 0;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 300;
+            opacity: 0.7;
+            transition: all 0.3s ease;
         }
-        input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
+        #reset-settings-btn:hover {
+            opacity: 1;
+            background-color: rgba(128, 128, 128, 0.1);
+            transform: translateY(-2px);
         }
-        input[type="color"]::-webkit-color-swatch {
-            border: 2px solid rgba(255,255,255,0.5);
-            border-radius: 50%;
+        #reset-settings-btn:active {
+            transform: translateY(0);
         }
 
     </style>
@@ -519,12 +524,9 @@
                 <input type="range" id="font-size-slider" min="0.5" max="2.0" step="0.1" value="1.0">
             </div>
 
-            <!-- 背景色 -->
-            <div class="setting-item">
-                <span>背景色</span>
-                <div class="color-picker-wrapper">
-                    <input type="color" id="bg-color-picker" value="#f5f7fa">
-                </div>
+            <!-- リセットボタン -->
+            <div class="reset-section">
+                <button id="reset-settings-btn">設定をリセット</button>
             </div>
         </div>
     </div>
@@ -543,10 +545,10 @@
         const showSecondsToggle = document.getElementById('show-seconds-toggle');
         const showDateToggle = document.getElementById('show-date-toggle');
         const blinkColonToggle = document.getElementById('blink-colon-toggle');
-        const timeFormatToggle = document.getElementById('time-format-toggle'); // 24h toggle
-        const dateFormatToggle = document.getElementById('date-format-toggle'); // English toggle
+        const timeFormatToggle = document.getElementById('time-format-toggle');
+        const dateFormatToggle = document.getElementById('date-format-toggle');
         const fontSizeSlider = document.getElementById('font-size-slider');
-        const bgColorPicker = document.getElementById('bg-color-picker');
+        const resetSettingsBtn = document.getElementById('reset-settings-btn');
         
         // Custom Select Elements
         const fontSelect = document.getElementById('font-select');
@@ -556,35 +558,28 @@
         const weekdaysJP = ['日', '月', '火', '水', '木', '金', '土'];
         const weekdaysEN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         
-        // --- 設定の管理 ---
-        let settings = {
+        // --- デフォルト設定 ---
+        const defaultSettings = {
             showSeconds: true,
             showDate: true,
             blinkColon: true,
             timeFormat24h: true, // true: 24h, false: 12h
             dateFormatEn: false, // true: Dot/En, false: JP
             fontFamily: "'Roboto', sans-serif",
-            fontScale: 1.0,
-            bgColor: "#f5f7fa",
-            isDarkModeOverride: false // ユーザーが色を変更した場合はダークモード自動検知を切る等のフラグ(今回は簡易実装として色指定優先)
+            fontScale: 1.0
         };
 
-        // localStorageから設定を読み込む
-        function loadSettings() {
-            const savedSettings = localStorage.getItem('digitalClockSettingsUltimate');
-            if (savedSettings) {
-                // 古い設定とマージする
-                settings = { ...settings, ...JSON.parse(savedSettings) };
-            }
+        // --- 設定の管理 ---
+        let settings = { ...defaultSettings };
 
-            // UIに設定を反映
+        // UIへの反映処理（共通化）
+        function applySettingsToUI() {
             showSecondsToggle.checked = settings.showSeconds;
             showDateToggle.checked = settings.showDate;
             blinkColonToggle.checked = settings.blinkColon;
             timeFormatToggle.checked = settings.timeFormat24h;
             dateFormatToggle.checked = settings.dateFormatEn;
             fontSizeSlider.value = settings.fontScale;
-            bgColorPicker.value = settings.bgColor;
             
             // フォントUIの反映
             const selectedOption = Array.from(fontOptions).find(opt => opt.getAttribute('data-value') === settings.fontFamily);
@@ -593,16 +588,36 @@
                 updateCustomSelectVisuals(selectedOption);
             }
 
-            // CSS変数・スタイルへの反映
+            // スタイルへの反映
             dateEl.style.display = settings.showDate ? 'block' : 'none';
             document.body.classList.toggle('blinking-enabled', settings.blinkColon);
-            document.documentElement.style.setProperty('--background-color', settings.bgColor);
             document.documentElement.style.setProperty('--font-scale', settings.fontScale);
             document.body.style.fontFamily = settings.fontFamily;
         }
 
+        // localStorageから設定を読み込む
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('digitalClockSettingsUltimate');
+            if (savedSettings) {
+                settings = { ...defaultSettings, ...JSON.parse(savedSettings) };
+                // 背景色プロパティが含まれていた場合、不要なので削除（互換性維持のため）
+                if(settings.bgColor) delete settings.bgColor;
+            }
+            applySettingsToUI();
+        }
+
         function saveSettings() {
             localStorage.setItem('digitalClockSettingsUltimate', JSON.stringify(settings));
+        }
+
+        // 設定のリセット
+        function resetSettings() {
+            if(confirm('設定を初期状態に戻しますか？')) {
+                settings = { ...defaultSettings };
+                saveSettings();
+                applySettingsToUI();
+                updateClock();
+            }
         }
 
         // --- 時計の更新処理 ---
@@ -693,12 +708,8 @@
             saveSettings();
         });
 
-        // 背景色
-        bgColorPicker.addEventListener('input', (e) => {
-            settings.bgColor = e.target.value;
-            document.documentElement.style.setProperty('--background-color', settings.bgColor);
-            saveSettings();
-        });
+        // リセットボタン
+        resetSettingsBtn.addEventListener('click', resetSettings);
 
         // --- カスタムセレクトボックスのロジック ---
         function updateCustomSelectVisuals(clickedOption) {
